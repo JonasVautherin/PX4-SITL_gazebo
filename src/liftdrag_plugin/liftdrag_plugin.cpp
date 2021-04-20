@@ -26,6 +26,8 @@
 #include "gazebo/msgs/msgs.hh"
 #include "liftdrag_plugin/liftdrag_plugin.h"
 
+#include "Force.pb.h"
+
 using namespace gazebo;
 
 GZ_REGISTER_MODEL_PLUGIN(LiftDragPlugin)
@@ -153,10 +155,8 @@ void LiftDragPlugin::Load(physics::ModelPtr _model,
       this->updateConnection = event::Events::ConnectWorldUpdateBegin(
           boost::bind(&LiftDragPlugin::OnUpdate, this));
     }
-
-    
   }
-  
+
   if (_sdf->HasElement("robotNamespace"))
   {
     namespace_ = _sdf->GetElement("robotNamespace")->Get<std::string>();
@@ -165,6 +165,12 @@ void LiftDragPlugin::Load(physics::ModelPtr _model,
   }
   node_handle_ = transport::NodePtr(new transport::Node());
   node_handle_->Init(namespace_);
+
+  if (this->sdf->HasElement("topic_name")) {
+      const auto lift_force_topic = this->sdf->Get<std::string>("topic_name");
+      lift_force_pub_ = node_handle_->Advertise<physics_msgs::msgs::Force>("~/" + lift_force_topic);
+      gzdbg << "Publishing to ~/" << lift_force_topic << std::endl;
+  }
 
   if (_sdf->HasElement("windSubTopic")){
     this->wind_sub_topic_ = _sdf->Get<std::string>("windSubTopic");
@@ -390,7 +396,7 @@ void LiftDragPlugin::OnUpdate()
   //      this->link->GetName() == "wing_2") &&
   //     (vel.Length() > 50.0 &&
   //      vel.Length() < 50.0))
-  if (0)
+  if (false)
   {
     gzdbg << "=============================\n";
     gzdbg << "sensor: [" << this->GetHandle() << "]\n";
@@ -423,6 +429,27 @@ void LiftDragPlugin::OnUpdate()
   // apply forces at cg (with torques for position shift)
   this->link->AddForceAtRelativePosition(force, this->cp);
   this->link->AddTorque(moment);
+
+  auto relative_center = this->link->RelativePose().Pos() + this->cp;
+
+  // Publish force and center of pressure for potential visual plugin
+  if (this->sdf->HasElement("topic_name")) {
+      msgs::Vector3d* force_center_msg = new msgs::Vector3d;
+      force_center_msg->set_x(relative_center.X());
+      force_center_msg->set_y(relative_center.Y());
+      force_center_msg->set_z(relative_center.Z());
+
+      msgs::Vector3d* force_vector_msg = new msgs::Vector3d;
+      force_vector_msg->set_x(force.X());
+      force_vector_msg->set_y(force.Y());
+      force_vector_msg->set_z(force.Z());
+
+      physics_msgs::msgs::Force force_msg;
+      force_msg.set_allocated_center(force_center_msg);
+      force_msg.set_allocated_force(force_vector_msg);
+
+      lift_force_pub_->Publish(force_msg);
+  }
 }
 
 void LiftDragPlugin::WindVelocityCallback(const boost::shared_ptr<const physics_msgs::msgs::Wind> &msg) {
