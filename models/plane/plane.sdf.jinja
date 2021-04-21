@@ -190,6 +190,10 @@
             <uri>__default__</uri>
           </script>
         </material>
+        <plugin name="left_elevon_lift_visual" filename="libLiftDragVisualPlugin.so">
+          <topic_name>lift_force/left_elevon</topic_name>
+          <material>Gazebo/Red</material>
+        </plugin>
       </visual>
     </link>
     <link name="right_elevon">
@@ -219,6 +223,10 @@
             <uri>__default__</uri>
           </script>
         </material>
+        <plugin name="right_elevon_lift_visual" filename="libLiftDragVisualPlugin.so">
+          <topic_name>lift_force/right_elevon</topic_name>
+          <material>Gazebo/Blue</material>
+        </plugin>
       </visual>
     </link>
     <link name="left_flap">
@@ -335,6 +343,10 @@
             <uri>__default__</uri>
           </script>
         </material>
+        <plugin name="rudder_lift_visual" filename="libLiftDragVisualPlugin.so">
+          <topic_name>lift_force/rudder</topic_name>
+          <material>Gazebo/Green</material>
+        </plugin>
       </visual>
     </link>
     <joint name='left_elevon_joint' type='revolute'>
@@ -487,6 +499,7 @@
       <forward>1 0 0</forward>
       <upward>0 0 1</upward>
       <link_name>base_link</link_name>
+      <topic_name>lift_force/left_elevon</topic_name>
       <control_joint_name>
         left_elevon_joint
       </control_joint_name>
@@ -509,6 +522,7 @@
       <forward>1 0 0</forward>
       <upward>0 0 1</upward>
       <link_name>base_link</link_name>
+      <topic_name>lift_force/right_elevon</topic_name>
       <control_joint_name>
         right_elevon_joint
       </control_joint_name>
@@ -597,6 +611,7 @@
       <forward>1 0 0</forward>
       <upward>0 1 0</upward>
       <link_name>base_link</link_name>
+      <topic_name>lift_force/rudder</topic_name>
       <control_joint_name> 
          rudder_joint 
       </control_joint_name> 
